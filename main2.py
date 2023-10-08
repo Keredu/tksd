@@ -28,10 +28,15 @@ class ImageWindow(tk.Toplevel):  # Changed from tk.Tk to tk.Toplevel
             self.show_images(0)
 
     def show_images(self, index):
+        if not self.winfo_exists():  # Check if window still exists
+            self.recreate_window()
         self.current_index = index
-        pil_image = Image.open(self.images[index])  # Open the image file with Pillow
-        self.photo = ImageTk.PhotoImage(pil_image)  # Convert to Tkinter-compatible image
+        pil_image = Image.open(self.images[index])
+        self.photo = ImageTk.PhotoImage(pil_image)
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
+
+    def recreate_window(self):
+        self.__init__(self.master)  # Recreate the window
     
     def on_key(self, event):
         if event.keysym == 'Right' and self.current_index + 1 < len(self.images):
@@ -129,10 +134,12 @@ def main():
         for img, temp_file in zip(images, temp_files):
             img.save(temp_file)
         temp_file_paths = [temp_file.name for temp_file in temp_files]
-
-        # Update the images of the existing ImageWindow instance
+        # Check if the ImageWindow instance is still valid
+        if window is None or not window.winfo_exists():
+            window = ImageWindow(root)
         window.images = temp_file_paths
         window.show_images(0)
+
 
     form = ParameterForm(generate_images)
     form.mainloop()
