@@ -7,10 +7,10 @@ from tkinter import simpledialog
 import tempfile
 import os
 
-
 # Tkinter GUI for displaying images and saving selected images
 class ImageWindow(tk.Toplevel):
-    def __init__(self, master, images=None, on_close=None):
+    def __init__(self, master, output_dir, images=None, on_close=None):
+        self.output_dir = output_dir  # Save the output_dir argument
         super().__init__(master)
         self.images = images or []
         self.on_close = on_close
@@ -47,7 +47,7 @@ class ImageWindow(tk.Toplevel):
             selected_image = self.images[self.current_index]
             file_name = simpledialog.askstring("Input", "Enter file name:")
             if file_name:
-                Image.open(selected_image).save(f"{file_name}.png")
+                Image.open(selected_image).save(f"{self.output_dir}/{file_name}.png")  # Use self.output_dir
 
 
 class ParameterForm(tk.Toplevel):
@@ -131,15 +131,17 @@ class Application:
         self.root.withdraw()  # Hide the root window
         self.window = None
         self.form = None
-        self.output_dir = './images'  # Define the output directory
+        self.output_dir = './images'  # Define the output directory for saved images
+        self.temp_dir = './tmp_images'  # Define the directory for temporary images
 
     def handle_close(self):  # Add this method
         self.root.quit()
         self.root.destroy()
 
     def generate_images(self, params):
-        # Create the output directory if it doesn't exist
+        # Create the output directory and temp directory if they don't exist
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.temp_dir, exist_ok=True)  # Ensure the temp directory exists
         self.form.update_status("Loading model...")
         pipe = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
         pipe.to("cuda")
@@ -160,16 +162,17 @@ class Application:
         # Update the status message to indicate that the pipeline has finished
         self.form.update_status("Pipeline finished. Displaying images.")
 
-        # Update the following line to save the images in the output directory
-        temp_files = [tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir=self.output_dir) for _ in images]
+        # Update the following line to save the images in the temp directory
+        temp_files = [tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir=self.temp_dir) for _ in images]
         for img, temp_file in zip(images, temp_files):
             img.save(temp_file)
         temp_file_paths = [temp_file.name for temp_file in temp_files]
 
         if self.window is None or not self.window.winfo_exists():
-            self.window = ImageWindow(self.root, images=temp_file_paths, on_close=self.form.enable_widgets)
+            self.window = ImageWindow(self.root, self.output_dir, images=temp_file_paths, on_close=self.form.enable_widgets)
         self.window.images = temp_file_paths
         self.window.show_images(0)
+
 
     def run(self):
         self.form = ParameterForm(self.root, self.generate_images)

@@ -1,3 +1,5 @@
 *.png
 *venv
 images
+tmp_images
+__pycache__
