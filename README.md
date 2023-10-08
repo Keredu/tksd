@@ -1,17 +1,7 @@
 
-markdown
-Copy code
 # TKSD: TKinter and Stable Diffusion
 
-TKSD is a graphical user interface (GUI) application built with TKinter for generating images using the Stable Diffusion method.
-
-## Table of Contents
-- [Installation](#installation)
-- [Usage](#usage)
-- [Dependencies](#dependencies)
-- [File Structure](#file-structure)
-- [Contributing](#contributing)
-- [License](#license)
+TKSD is a graphical user interface (GUI) application built with TKinter for generating images using Stable Diffusion.
 
 ## Get Started
 
