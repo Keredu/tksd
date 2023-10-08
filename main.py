@@ -76,6 +76,10 @@ class ParameterForm(tk.Toplevel):
         self.num_inference_steps_entry = tk.Entry(self)
         self.num_inference_steps_entry.insert(0, "50")
 
+        self.num_images_label = tk.Label(self, text="Number of Images:")
+        self.num_images_entry = tk.Entry(self)
+        self.num_images_entry.insert(0, "3")  # Set default value to 3
+
         self.submit_button = tk.Button(self, text="Submit", command=self.submit)
 
         self.status_label = tk.Label(self, text="")
@@ -90,6 +94,8 @@ class ParameterForm(tk.Toplevel):
         self.guidance_scale_entry.pack()
         self.num_inference_steps_label.pack()
         self.num_inference_steps_entry.pack()
+        self.num_images_label.pack()
+        self.num_images_entry.pack()
         self.submit_button.pack()
         self.status_label.pack()
 
@@ -119,7 +125,8 @@ class ParameterForm(tk.Toplevel):
             "height": int(self.height_entry.get()),
             "width": int(self.width_entry.get()),
             "guidance_scale": float(self.guidance_scale_entry.get()),
-            "num_inference_steps": int(self.num_inference_steps_entry.get())
+            "num_inference_steps": int(self.num_inference_steps_entry.get()),
+            "num_images": int(self.num_images_entry.get())
         }
         self.callback(params)
 
@@ -151,7 +158,7 @@ class Application:
         # Update the status message to indicate that the pipeline is running
         self.form.update_status("Running the pipeline...")
         images = pipe(
-            [params['prompt']] * 3,
+            [params['prompt']] * params['num_images'],
             height=params['height'],
             width=params['width'],
             guidance_scale=params['guidance_scale'],
