@@ -141,23 +141,26 @@ class Application:
         self.output_dir = './images'  # Define the output directory for saved images
         self.temp_dir = './tmp_images'  # Define the directory for temporary images
 
+        # Create the output and temp directory if they don't exist
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.temp_dir, exist_ok=True)
+
+        # Initialize the model once
+        self.pipe = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
+        self.pipe.to("cuda")
+
     def handle_close(self):  # Add this method
         self.root.quit()
         self.root.destroy()
 
     def generate_images(self, params):
-        # Create the output directory and temp directory if they don't exist
-        os.makedirs(self.output_dir, exist_ok=True)
-        os.makedirs(self.temp_dir, exist_ok=True)  # Ensure the temp directory exists
         self.form.update_status("Loading model...")
-        pipe = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
-        pipe.to("cuda")
 
-        generator = torch.Generator("cuda").manual_seed(1024)
+        generator = torch.Generator("cuda").manual_seed(1024)  # Use random seed
 
         # Update the status message to indicate that the pipeline is running
         self.form.update_status("Running the pipeline...")
-        images = pipe(
+        images = self.pipe(
             [params['prompt']] * params['num_images'],
             height=params['height'],
             width=params['width'],
@@ -165,11 +168,10 @@ class Application:
             num_inference_steps=params['num_inference_steps'],
             generator=generator
         ).images
-        
+
         # Update the status message to indicate that the pipeline has finished
         self.form.update_status("Pipeline finished. Displaying images.")
 
-        # Update the following line to save the images in the temp directory
         temp_files = [tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir=self.temp_dir) for _ in images]
         for img, temp_file in zip(images, temp_files):
             img.save(temp_file)
@@ -180,10 +182,15 @@ class Application:
         self.window.images = temp_file_paths
         self.window.show_images(0)
 
-
     def run(self):
         self.form = ParameterForm(self.root, self.generate_images)
         self.form.mainloop()
+
+    def __del__(self):
+        # Delete temporary files on object destruction
+        for root, dirs, files in os.walk(self.temp_dir):
+            for file in files:
+                os.remove(os.path.join(root, file))
 
 
 if __name__ == "__main__":
